@@ -7,7 +7,6 @@ package concrete
 import (
 	"bytes"
 	"errors"
-	"strings"
 
 	"github.com/gonum/graph"
 )
@@ -40,20 +39,20 @@ func NewTileGraph(dimX, dimY int, isPassable bool) *TileGraph {
 	}
 }
 
-func GenerateTileGraph(template string) (*TileGraph, error) {
-	rows := strings.Split(strings.TrimSpace(template), "\n")
+func (g *TileGraph) UnmarshalText(text []byte) error {
+	rows := bytes.Split(text, []byte{'\n'})
 
 	tiles := make([]bool, 0)
 
 	colCheck := -1
 	for _, colString := range rows {
 		colCount := 0
-		cols := strings.NewReader(colString)
+		cols := bytes.NewReader(colString)
 		for cols.Len() != 0 {
 			colCount += 1
 			ch, _, err := cols.ReadRune()
 			if err != nil {
-				return nil, errors.New("Error while reading rune from input string")
+				return errors.New("Error while reading rune from input string")
 			}
 
 			switch ch {
@@ -62,22 +61,24 @@ func GenerateTileGraph(template string) (*TileGraph, error) {
 			case space:
 				tiles = append(tiles, true)
 			default:
-				return nil, errors.New("Unrecognized character while reading input string")
+				return errors.New("Unrecognized character while reading input string")
 			}
 		}
 
 		if colCheck == -1 {
 			colCheck = colCount
 		} else if colCheck != colCount {
-			return nil, errors.New("Jagged rows, cannot generate graph.")
+			return errors.New("Jagged rows, cannot generate graph.")
 		}
 	}
 
-	return &TileGraph{
+	*g = TileGraph{
 		tiles:   tiles,
 		numRows: len(rows),
 		numCols: colCheck,
-	}, nil
+	}
+
+	return nil
 }
 
 func (g *TileGraph) SetPassability(row, col int, passability bool) {
@@ -89,7 +90,7 @@ func (g *TileGraph) SetPassability(row, col int, passability bool) {
 	g.tiles[loc] = passability
 }
 
-func (g *TileGraph) String() string {
+func (g *TileGraph) asBufferedText() *bytes.Buffer {
 	var b bytes.Buffer
 	for r := 0; r < g.numRows; r++ {
 		if r != 0 {
@@ -104,7 +105,15 @@ func (g *TileGraph) String() string {
 		}
 	}
 
-	return b.String()
+	return &b
+}
+
+func (g *TileGraph) MarshalText() ([]byte, error) {
+	return g.asBufferedText().Bytes(), nil
+}
+
+func (g *TileGraph) String() string {
+	return g.asBufferedText().String()
 }
 
 func (g *TileGraph) PathString(path []graph.Node) string {

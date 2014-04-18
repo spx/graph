@@ -55,7 +55,7 @@ func TestTileGraph(t *testing.T) {
 		t.Fatal("Passability set incorrectly")
 	}
 
-	if tg2, err := concrete.GenerateTileGraph("▀  ▀\n▀▀ ▀\n▀▀ ▀\n▀▀ ▀"); err != nil {
+	if tg2 := (concrete.TileGraph{}); tg2.UnmarshalText([]byte("▀  ▀\n▀▀ ▀\n▀▀ ▀\n▀▀ ▀")) != nil {
 		t.Error("Tile graph errored on interpreting valid template string\n▀  ▀\n▀▀ ▀\n▀▀ ▀\n▀▀ ▀")
 	} else if tg2.String() != "▀  ▀\n▀▀ ▀\n▀▀ ▀\n▀▀ ▀" {
 		t.Error("Tile graph failed to generate properly with input string\n▀  ▀\n▀▀ ▀\n▀▀ ▀\n▀▀ ▀")
